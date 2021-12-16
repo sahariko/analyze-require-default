@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "allowJs": false,
+    "module": "CommonJS",
+    "target": "ES5",
+    "noImplicitAny": true,
+    "removeComments": true,
+    "preserveConstEnums": true,
+    "sourceMap": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "moduleResolution": "node",
+    "outDir": "build",
+    "resolveJsonModule": true
+  },
+  "ts-node": {
+    "compilerOptions": {
+      "module": "CommonJS"
+    }
+  },
+  "include": ["src/**/*", "bin/**/*"],
+  "exclude": ["node_modules"]
+}

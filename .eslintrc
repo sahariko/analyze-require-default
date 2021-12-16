@@ -1,0 +1,15 @@
+{
+  "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
+  "root": true,
+  "parser": "@typescript-eslint/parser",
+  "plugins": ["@typescript-eslint"],
+  "env": { "node": true, "es6": true },
+  "parserOptions": {
+    "ecmaVersion": 2020
+  },
+  "rules": {
+    "@typescript-eslint/no-explicit-any": 0,
+    "@typescript-eslint/no-non-null-assertion": 0,
+    "@typescript-eslint/no-var-requires": 0
+  }
+}
