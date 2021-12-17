@@ -43,6 +43,6 @@
     "@babel/traverse": "^7.16.5",
     "chalk": "4",
     "commander": "^8.3.0",
-    "pretty-print-ms": "^1.0.3"
+    "pretty-print-ms": "^1.0.5"
   }
 }

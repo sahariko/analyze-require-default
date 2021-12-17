@@ -1366,10 +1366,10 @@ prelude-ls@^1.2.1:
   resolved "https://registry.npmjs.org/prelude-ls/-/prelude-ls-1.2.1.tgz#debc6489d7a6e6b0e7611888cec880337d316396"
   integrity sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==
 
-pretty-print-ms@^1.0.3:
-  version "1.0.3"
-  resolved "https://registry.npmjs.org/pretty-print-ms/-/pretty-print-ms-1.0.3.tgz#edcd3eae74ff3baf41a6194ec4997a15d4c3225f"
-  integrity sha512-CX7Fc3451d4ztNJHFQxzYGOPBsPA71AYRzXYNBZvvMP6kg7reKnCQmCAfTzO1EzD6RE6Wfjul+xZzg6HkVQmfA==
+pretty-print-ms@^1.0.5:
+  version "1.0.5"
+  resolved "https://registry.npmjs.org/pretty-print-ms/-/pretty-print-ms-1.0.5.tgz#ff594fad358e6c261b0f2ce74bc6f327893185e6"
+  integrity sha512-TE60RpbLfjeQiTH+HcceBpoJ+Gcn+zRLft5IekcU9gmT0bmumhPWMRME/TkXeiUvOgaMH49pGiHttWQFK+XO4A==
 
 progress@^2.0.0:
   version "2.0.3"
