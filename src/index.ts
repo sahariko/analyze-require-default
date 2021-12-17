@@ -249,7 +249,7 @@ export default class Analyzer {
   };
 
   private replaceAlias = (filePath: FilePath) => {
-    const parts = filePath.split('/');
+    const parts = filePath.split(path.sep);
     const firstSegment = parts[0];
 
     if (firstSegment === '.' || firstSegment === '..') {
@@ -259,7 +259,7 @@ export default class Analyzer {
     if (firstSegment in this.options.alias) {
       parts[0] = this.options.alias[firstSegment];
 
-      return path.join(this.options.root, parts.join('/'));
+      return path.join(this.options.root, parts.join(path.sep));
     }
 
     return filePath;
@@ -303,14 +303,14 @@ export default class Analyzer {
         );
 
   private normalizeFilePath = (filePath: FilePath) =>
-    filePath.startsWith('./') ||
-    filePath.startsWith('../') ||
+    filePath.startsWith(`.${path.sep}`) ||
+    filePath.startsWith(`..${path.sep}`) ||
     path.isAbsolute(filePath)
       ? filePath
-      : `./${filePath}`;
+      : `.${path.sep}${filePath}`;
 
   private printModulePath = (filePath: FilePath) =>
-    chalk.cyan(filePath.replace(`${this.options.root}/`, ''));
+    chalk.cyan(filePath.replace(`${this.options.root}${path.sep}`, ''));
 
   private debug = (...message: any[]) => {
     if (!this.options.debug) {
