@@ -1,11 +1,12 @@
 {
   "name": "analyze-require-default",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Analyze require statements of ES modules without .default",
   "main": "build/src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint .",
+    "build": "tsc -b",
     "watch": "tsc --watch"
   },
   "bin": {
@@ -13,6 +14,19 @@
   },
   "author": "Sahar Brodbeker <saharonb@gmail.com>",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sahariko/analyze-require-default.git"
+  },
+  "homepage": "https://github.com/sahariko/analyze-require-default",
+  "keywords": [
+    "analyze",
+    "analysis",
+    "exports",
+    "defaults",
+    "commonjs",
+    "require"
+  ],
   "devDependencies": {
     "@types/babel__traverse": "^7.14.2",
     "@types/commander": "^2.12.2",
