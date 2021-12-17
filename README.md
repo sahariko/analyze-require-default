@@ -64,8 +64,8 @@ analyze-require-default ./a.js ./b.js
 Can be either a `.js` file or a `.json` file, supports the following options:
 
 | Option    | What it does                                                                                                    | Type                     |
-| --------- | --------------------------------------------------------------------------------------------------------------- | ------------------------ | --------- |
-| `entries` | A list of entries to start the analysis from.                                                                   | `string                  | string[]` |
+| --------- | --------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| `entries` | A list of entries to start the analysis from.                                                                   | `string \| string[]`     |
 | `alias`   | A map of path aliases, similar to Webpack's [alias](https://webpack.js.org/configuration/resolve/#resolvealias) | `Record<string, string>` |
 | `root`    | An absolute or relative path to the root directory.                                                             | `string`                 |
 | `debug`   | Output extra debugging information.                                                                             | `boolean`                |
