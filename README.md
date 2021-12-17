@@ -51,13 +51,13 @@ analyze-require-default ./a.js ./b.js
 
 ### Options
 
-| Option | Alias       | What it does                                                                 | Positional arguments                                | Default                |
-| ------ | ----------- | ---------------------------------------------------------------------------- | --------------------------------------------------- | ---------------------- |
-| `-v`   | `--version` | Output the current version.                                                  | -                                                   | -                      |
-| `-r`   | `--root`    | The project's root.                                                          | An absolute or relative path to the root directory. | The current directory. |
-| `-d`   | `--debug`   | Output extra debugging information.                                          | -                                                   | `false`                |
-| `-c`   | `--config`  | An absolute or relative path to a [configuration file](#configuration-file). | -                                                   | `false`                |
-| `-h`   | `--help`    | Output the program's usage information.                                      | -                                                   | -                      |
+| Option | Alias       | What it does                                      | Positional arguments                                                         | Default                |
+| ------ | ----------- | ------------------------------------------------- | ---------------------------------------------------------------------------- | ---------------------- |
+| `-r`   | `--root`    | Sets the project's root.                          | An absolute or relative path to the root directory.                          | The current directory. |
+| `-c`   | `--config`  | Uses a [configuration file](#configuration-file). | An absolute or relative path to a [configuration file](#configuration-file). | -                      |
+| `-d`   | `--debug`   | Outputs extra debugging information.              | -                                                                            | `false`                |
+| `-v`   | `--version` | Outputs the current version.                      | -                                                                            | -                      |
+| `-h`   | `--help`    | Output the program's usage information.           | -                                                                            | -                      |
 
 ### Configuration file
 
