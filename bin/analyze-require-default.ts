@@ -12,18 +12,17 @@ interface CLIOptions extends Options {
 }
 
 interface ConfigFile extends Options {
-  entries?: FilePath | FilePath[];
+  root?: FilePath;
 }
 
 program.version(version, '-v, --version', 'Output the current version');
 
 program
-  .argument('[entries...]', 'Entries to parse, separated by a space')
-  .usage(chalk.cyan('[entries...] [options]'))
-  .option(
-    '-r, --root [path]',
+  .argument(
+    '[root]',
     `The project's root (default: ${chalk.yellow('process.cwd()')})`
   )
+  .usage(chalk.cyan('[root] [options]'))
   .option(
     '-d, --debug',
     'Output extra debugging information',
@@ -31,15 +30,12 @@ program
   )
   .option('-c, --config <path>', 'The path to a configuration file')
   .helpOption('-h, --help', 'Display this message')
-  .action((entries: string[], options: CLIOptions) => {
+  .action(async (root: string, options: CLIOptions) => {
     const config: ConfigFile = options.config
       ? require(path.resolve(process.cwd(), options.config))
       : {};
 
-    const entryPoints = config.entries || entries;
-
-    new Analyzer(entryPoints, {
-      root: config.root || options.root,
+    new Analyzer(config.root || root, {
       debug: config.debug || options.debug,
       alias: config.alias || {},
     }).execute();
@@ -50,7 +46,7 @@ program.addHelpText(
   `
 
 Example:
-  $ analyze-require-default ./a.js ./b.js`
+  $ analyze-require-default ./app`
 );
 
 program.parse(process.argv);

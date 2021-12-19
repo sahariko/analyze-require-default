@@ -40,35 +40,33 @@ npm i -g analyze-require-default
 ## Usage and options
 
 ```
-analyze-require-default [entries...] [options]
+analyze-require-default [root] [options]
 ```
 
 #### Example
 
 ```
-analyze-require-default ./a.js ./b.js
+analyze-require-default ./app
 ```
 
 ### Options
 
-| Option | Alias       | What it does                                      | Positional arguments                                                         | Default                |
-| ------ | ----------- | ------------------------------------------------- | ---------------------------------------------------------------------------- | ---------------------- |
-| `-r`   | `--root`    | Sets the project's root.                          | An absolute or relative path to the root directory.                          | The current directory. |
-| `-c`   | `--config`  | Uses a [configuration file](#configuration-file). | An absolute or relative path to a [configuration file](#configuration-file). | -                      |
-| `-d`   | `--debug`   | Outputs extra debugging information.              | -                                                                            | `false`                |
-| `-v`   | `--version` | Outputs the current version.                      | -                                                                            | -                      |
-| `-h`   | `--help`    | Output the program's usage information.           | -                                                                            | -                      |
+| Option | Alias       | What it does                                      | Positional arguments                                                         | Default |
+| ------ | ----------- | ------------------------------------------------- | ---------------------------------------------------------------------------- | ------- |
+| `-c`   | `--config`  | Uses a [configuration file](#configuration-file). | An absolute or relative path to a [configuration file](#configuration-file). | -       |
+| `-d`   | `--debug`   | Outputs extra debugging information.              | -                                                                            | `false` |
+| `-v`   | `--version` | Outputs the current version.                      | -                                                                            | -       |
+| `-h`   | `--help`    | Output the program's usage information.           | -                                                                            | -       |
 
 ### Configuration file
 
 Can be either a `.js` file or a `.json` file, supports the following options:
 
-| Option    | What it does                                                                                                    | Type                     |
-| --------- | --------------------------------------------------------------------------------------------------------------- | ------------------------ |
-| `entries` | A list of entries to start the analysis from.                                                                   | `string \| string[]`     |
-| `alias`   | A map of path aliases, similar to Webpack's [alias](https://webpack.js.org/configuration/resolve/#resolvealias) | `Record<string, string>` |
-| `root`    | An absolute or relative path to the root directory.                                                             | `string`                 |
-| `debug`   | Output extra debugging information.                                                                             | `boolean`                |
+| Option  | What it does                                                                                                    | Type                     |
+| ------- | --------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| `root`  | An absolute or relative path to the root directory.                                                             | `string`                 |
+| `alias` | A map of path aliases, similar to Webpack's [alias](https://webpack.js.org/configuration/resolve/#resolvealias) | `Record<string, string>` |
+| `debug` | Output extra debugging information.                                                                             | `boolean`                |
 
 #### Example
 
@@ -82,7 +80,7 @@ analyze-require-default -c ./config.js
 const path = require('path');
 
 module.exports = {
-  entries: ['./src/a', './src/b', './src/c'],
+  root: './app',
   debug: true,
   alias: {
     Utilities: path.resolve(__dirname, 'src/utilities/'),

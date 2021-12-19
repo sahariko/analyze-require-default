@@ -11,27 +11,24 @@ import {
 } from '@babel/types';
 import prettyPrint from 'pretty-print-ms';
 import Queue from './Queue';
-import { DEFAULT_OPTIONS, FilePath, Options } from './constants';
+import { ALWAYS_IGNORE, DEFAULT_OPTIONS, FilePath, Options } from './constants';
 
 const PARSEABLE_EXTENSIONS = new Set(['.ts', '.js', '.jsx']);
 
-interface QueueItem {
-  filePath: FilePath;
-  parent?: FilePath;
-}
-
-interface SuspiciousModule {
-  hasDefaultExport: boolean;
-  callers: FilePath[];
+class ModuleData {
+  hasDefaultExport = false;
+  callers: FilePath[] = [];
 }
 
 export default class Analyzer {
+  private root: FilePath;
   private options: Required<Options>;
-  private queue = new Queue<QueueItem>();
-  private analyzedModules = new Set();
-  suspiciousModules: Record<FilePath, SuspiciousModule> = {};
+  private analyzeQueue = new Queue<FilePath>();
+  private scanQueue = new Queue<FilePath>();
+  private analyzedModules: Record<FilePath, ModuleData> = {};
+  ignoreRegex: RegExp;
 
-  constructor(entries: FilePath | FilePath[], options: Options = {}) {
+  constructor(root: FilePath = process.cwd(), options: Options = {}) {
     this.options = Object.keys(DEFAULT_OPTIONS).reduce((opts, key) => {
       const k = key as keyof Options;
       return {
@@ -40,43 +37,40 @@ export default class Analyzer {
           typeof options[k] !== 'undefined' ? options[k] : DEFAULT_OPTIONS[k],
       };
     }, {}) as Required<Options>;
-
-    if (Array.isArray(entries)) {
-      entries.forEach((entry) => {
-        this.queue.push({ filePath: entry });
-      });
-    } else {
-      this.queue.push({ filePath: entries });
-    }
+    this.ignoreRegex = new RegExp(`${this.options.ignore}|${ALWAYS_IGNORE}`);
+    this.root = root;
 
     this.validate();
+
+    this.scanQueue.push(this.root);
+    this.scan();
   }
 
   execute() {
     const start = Date.now();
 
-    while (this.queue.hasItems) {
-      this.analyze(this.queue.pop()!);
+    while (this.analyzeQueue.hasItems) {
+      this.analyze(this.analyzeQueue.pop()!);
     }
 
     const end = Date.now();
     console.log(
       `Analyzed ${chalk.magenta(
-        this.analyzedModules.size
+        Object.keys(this.analyzedModules).length
       )} modules in ${chalk.yellow(prettyPrint(end - start))}`
     );
     console.log();
 
     const usages = [];
 
-    for (const suspiciousModule in this.suspiciousModules) {
+    for (const analyzedModule in this.analyzedModules) {
       const { hasDefaultExport, callers } =
-        this.suspiciousModules[suspiciousModule];
+        this.analyzedModules[analyzedModule];
 
       if (hasDefaultExport && callers.length) {
         usages.push(
           `  - ${this.printModulePath(
-            suspiciousModule
+            analyzedModule
           )} is required by ${this.printModulePath(callers.join(', '))}`
         );
       }
@@ -84,42 +78,37 @@ export default class Analyzer {
 
     if (usages.length) {
       console.log(
-        `Found ${usages.length} ES modules that are being "require"ed without dpecifying "default":`
+        `Found ${usages.length} ES modules that are being "require"ed without specifying "default":`
       );
       usages.forEach((usage) => console.log(usage));
     } else {
       console.log(
-        `Found 0 ES modules that are being "require"ed without dpecifying "default" 🎉`
+        `Found 0 ES modules that are being "require"ed without specifying "default" 🎉`
       );
     }
   }
 
-  private analyze({ filePath, parent }: QueueItem) {
-    const resolvedPath = this.resolveFilePath({ filePath, parent });
-
-    if (
-      this.analyzedModules.has(resolvedPath) ||
-      !PARSEABLE_EXTENSIONS.has(path.extname(resolvedPath))
-    ) {
+  private analyze(filePath: FilePath) {
+    if (this.analyzedModules[filePath]) {
       return;
     }
 
-    const source = fs.readFileSync(resolvedPath, 'utf-8');
+    this.analyzedModules[filePath] = new ModuleData();
+    const source = fs.readFileSync(filePath, 'utf-8');
     let ast;
 
     try {
-      ast = parse(source, { sourceType: 'module', plugins: ['jsx'] });
+      ast = parse(source, {
+        sourceType: 'module',
+        plugins: ['jsx', 'typescript'],
+      });
     } catch (e) {
-      throw new Error(`Error while parsing ${resolvedPath}: ${e}`);
+      throw new Error(
+        chalk.red('Error while parsing ') + chalk.cyan(filePath) + ' ' + e
+      );
     }
 
     traverse(ast, {
-      ImportDeclaration: ({ node }) => {
-        this.safePushToQueue({
-          filePath: node.source.value,
-          parent: resolvedPath,
-        });
-      },
       CallExpression: ({ node, container }) => {
         const isRequireStatement =
           (node.callee as Identifier).name === 'require';
@@ -141,53 +130,54 @@ export default class Analyzer {
 
         const { value: modulePath } = node.arguments[0] as StringLiteral;
 
-        this.safePushToQueue({ filePath: modulePath, parent: resolvedPath });
-        this.suspectModule(modulePath, resolvedPath);
+        this.suspectModule(modulePath, filePath);
       },
       ExportDefaultDeclaration: () => {
-        this.markSuspiciousModule(resolvedPath);
+        this.analyzedModules[filePath].hasDefaultExport = true;
       },
     });
-
-    this.analyzedModules.add(resolvedPath);
   }
 
-  private markSuspiciousModule = (filePath: FilePath) => {
-    if (this.suspiciousModules[filePath]) {
-      this.suspiciousModules[filePath].hasDefaultExport = true;
+  private scan = () => {
+    while (this.scanQueue.hasItems) {
+      const dirPath = this.scanQueue.pop();
+
+      fs.readdirSync(dirPath!).forEach((f) => {
+        const fullPath = path.join(dirPath!, f);
+
+        if (this.ignoreRegex.test(fullPath)) {
+          return;
+        }
+
+        const isDirectory = fs.lstatSync(fullPath).isDirectory();
+
+        if (isDirectory) {
+          this.scanQueue.push(fullPath);
+        } else if (PARSEABLE_EXTENSIONS.has(path.extname(fullPath))) {
+          this.analyzeQueue.push(fullPath);
+        }
+      });
     }
   };
 
   private suspectModule = (filePath: FilePath, parent: FilePath) => {
-    const suspiciousModuleResolvedPath = this.resolveFilePath({
-      filePath,
-      parent,
-    });
+    const suspiciousModuleResolvedPath = this.resolveFilePath(filePath, parent);
 
-    if (this.suspiciousModules[suspiciousModuleResolvedPath]) {
-      this.suspiciousModules[suspiciousModuleResolvedPath].callers.push(parent);
+    if (this.analyzedModules[suspiciousModuleResolvedPath]) {
+      this.analyzedModules[suspiciousModuleResolvedPath].callers.push(parent);
     } else {
-      this.suspiciousModules[suspiciousModuleResolvedPath] = {
+      this.analyzedModules[suspiciousModuleResolvedPath] = {
         hasDefaultExport: false,
         callers: [parent],
       };
     }
   };
 
-  private safePushToQueue(queueItem: QueueItem) {
-    const extension = path.extname(queueItem.filePath);
-
-    if (
-      (extension && !PARSEABLE_EXTENSIONS.has(extension)) ||
-      queueItem.parent?.includes('node_modules')
-    ) {
-      return;
+  private resolveFilePath = (filePath: FilePath, parent: FilePath) => {
+    if (path.isAbsolute(filePath)) {
+      return filePath;
     }
 
-    this.queue.push(queueItem);
-  }
-
-  private resolveFilePath = ({ filePath, parent }: QueueItem) => {
     const replacedAliasFile = this.replaceAlias(filePath);
 
     return this.resolveWithExtension(replacedAliasFile, parent);
@@ -259,7 +249,7 @@ export default class Analyzer {
     if (firstSegment in this.options.alias) {
       parts[0] = this.options.alias[firstSegment];
 
-      return path.join(this.options.root, parts.join(path.sep));
+      return path.join(this.root, parts.join(path.sep));
     }
 
     return filePath;
@@ -291,10 +281,7 @@ export default class Analyzer {
     }
   };
 
-  private getFullPath = (
-    filePath: FilePath,
-    parent: FilePath = this.options.root
-  ) =>
+  private getFullPath = (filePath: FilePath, parent: FilePath = this.root) =>
     path.isAbsolute(filePath)
       ? filePath
       : path.join(
@@ -310,7 +297,7 @@ export default class Analyzer {
       : `.${path.sep}${filePath}`;
 
   private printModulePath = (filePath: FilePath) =>
-    chalk.cyan(filePath.replace(`${this.options.root}${path.sep}`, ''));
+    chalk.cyan(filePath.replace(`${this.root}${path.sep}`, ''));
 
   private debug = (...message: any[]) => {
     if (!this.options.debug) {
@@ -321,10 +308,10 @@ export default class Analyzer {
   };
 
   private validate = () => {
-    if (!fs.existsSync(this.options.root)) {
+    if (!fs.existsSync(this.root)) {
       console.log(
         chalk.red("Couldn't find root directory"),
-        chalk.cyan(this.options.root)
+        chalk.cyan(this.root)
       );
       process.exit(1);
     }

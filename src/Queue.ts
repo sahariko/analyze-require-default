@@ -10,6 +10,7 @@ class Node<T> {
 export default class Queue<T> {
   root?: Node<T>;
   last?: Node<T>;
+  size = 0;
 
   push = (item: T) => {
     const node = new Node(item);
@@ -24,6 +25,8 @@ export default class Queue<T> {
 
       prevLast.next = this.last;
     }
+
+    this.size++;
   };
 
   pop = () => {
@@ -34,6 +37,8 @@ export default class Queue<T> {
     const prevRoot = this.root;
 
     this.root = prevRoot.next;
+
+    this.size--;
 
     return prevRoot.value;
   };
