@@ -1,6 +1,6 @@
 {
   "name": "analyze-require-default",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Analyze require statements of ES modules without .default",
   "main": "build/src/index.js",
   "scripts": {
