@@ -8,6 +8,7 @@ import {
   Identifier,
   MemberExpression,
   StringLiteral,
+  SourceLocation,
 } from '@babel/types';
 import prettyPrint from 'pretty-print-ms';
 import Queue from './Queue';
@@ -69,9 +70,9 @@ export default class Analyzer {
 
       if (hasDefaultExport && callers.length) {
         usages.push(
-          `  - ${this.printModulePath(
-            analyzedModule
-          )} is required by ${this.printModulePath(callers.join(', '))}`
+          `  - ${this.printModulePath(analyzedModule)} is required by ${callers
+            .map((m) => this.printModulePath([this.root, m].join(path.sep)))
+            .join(', ')}`
         );
       }
     }
@@ -130,7 +131,7 @@ export default class Analyzer {
 
         const { value: modulePath } = node.arguments[0] as StringLiteral;
 
-        this.suspectModule(modulePath, filePath);
+        this.suspectModule(modulePath, filePath, node.loc?.start);
       },
       ExportDefaultDeclaration: () => {
         this.analyzedModules[filePath].hasDefaultExport = true;
@@ -160,15 +161,24 @@ export default class Analyzer {
     }
   };
 
-  private suspectModule = (filePath: FilePath, parent: FilePath) => {
+  private suspectModule = (
+    filePath: FilePath,
+    parent: FilePath,
+    location?: SourceLocation['start']
+  ) => {
     const suspiciousModuleResolvedPath = this.resolveFilePath(filePath, parent);
+    const fullParentPath = location
+      ? [parent, location.line, location.column].join(':')
+      : parent;
 
     if (this.analyzedModules[suspiciousModuleResolvedPath]) {
-      this.analyzedModules[suspiciousModuleResolvedPath].callers.push(parent);
+      this.analyzedModules[suspiciousModuleResolvedPath].callers.push(
+        fullParentPath
+      );
     } else {
       this.analyzedModules[suspiciousModuleResolvedPath] = {
         hasDefaultExport: false,
-        callers: [parent],
+        callers: [fullParentPath],
       };
     }
   };
