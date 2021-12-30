@@ -1,5 +1,5 @@
 export interface Options {
-  alias?: Record<string, string>;
+  alias?: Record<string, string | string[]>;
   debug?: boolean;
   ignore?: string;
 }

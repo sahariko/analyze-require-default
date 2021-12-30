@@ -62,11 +62,11 @@ analyze-require-default ./app
 
 Can be either a `.js` file or a `.json` file, supports the following options:
 
-| Option  | What it does                                                                                                    | Type                     |
-| ------- | --------------------------------------------------------------------------------------------------------------- | ------------------------ |
-| `root`  | An absolute or relative path to the root directory.                                                             | `string`                 |
-| `alias` | A map of path aliases, similar to Webpack's [alias](https://webpack.js.org/configuration/resolve/#resolvealias) | `Record<string, string>` |
-| `debug` | Output extra debugging information.                                                                             | `boolean`                |
+| Option  | What it does                                                                                                    | Type                                 |
+| ------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| `root`  | An absolute or relative path to the root directory.                                                             | `string`                             |
+| `alias` | A map of path aliases, similar to Webpack's [alias](https://webpack.js.org/configuration/resolve/#resolvealias) | `Record<string, string \| string[]>` |
+| `debug` | Output extra debugging information.                                                                             | `boolean`                            |
 
 #### Example
 

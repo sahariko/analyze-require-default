@@ -19,6 +19,11 @@ const PARSEABLE_EXTENSIONS = new Set(['.ts', '.js', '.jsx']);
 class ModuleData {
   hasDefaultExport = false;
   callers: FilePath[] = [];
+  analyzed = false;
+
+  constructor(callers: FilePath[] = []) {
+    this.callers = callers;
+  }
 }
 
 export default class Analyzer {
@@ -90,11 +95,12 @@ export default class Analyzer {
   }
 
   private analyze(filePath: FilePath) {
-    if (this.analyzedModules[filePath]) {
+    if (!this.analyzedModules[filePath]) {
+      this.analyzedModules[filePath] = new ModuleData();
+    } else if (this.analyzedModules[filePath].analyzed) {
       return;
     }
 
-    this.analyzedModules[filePath] = new ModuleData();
     const source = fs.readFileSync(filePath, 'utf-8');
     let ast;
 
@@ -137,6 +143,8 @@ export default class Analyzer {
         this.analyzedModules[filePath].hasDefaultExport = true;
       },
     });
+
+    this.analyzedModules[filePath].analyzed = true;
   }
 
   private scan = () => {
@@ -176,10 +184,9 @@ export default class Analyzer {
         fullParentPath
       );
     } else {
-      this.analyzedModules[suspiciousModuleResolvedPath] = {
-        hasDefaultExport: false,
-        callers: [fullParentPath],
-      };
+      this.analyzedModules[suspiciousModuleResolvedPath] = new ModuleData([
+        fullParentPath,
+      ]);
     }
   };
 
@@ -188,9 +195,46 @@ export default class Analyzer {
       return filePath;
     }
 
-    const replacedAliasFile = this.replaceAlias(filePath);
+    const replacedAliasFileOptions = this.replaceAlias(filePath);
 
-    return this.resolveWithExtension(replacedAliasFile, parent);
+    for (const replacedAliasFile of replacedAliasFileOptions) {
+      try {
+        return this.resolveWithExtension(replacedAliasFile, parent);
+      } catch {
+        /**/
+      }
+    }
+
+    console.log(
+      ...[
+        chalk.red("Couldn't resolve path to module"),
+        this.printModulePath(filePath),
+        parent && `(required by ${this.printModulePath(parent)})`,
+      ].filter(Boolean)
+    );
+    process.exit(1);
+  };
+
+  private replaceAlias = (filePath: FilePath) => {
+    const parts = filePath.split(path.sep);
+    const firstSegment = parts[0];
+
+    if (firstSegment === '.' || firstSegment === '..') {
+      return [filePath];
+    }
+
+    if (firstSegment in this.options.alias) {
+      const alias = this.options.alias[firstSegment];
+      const aliasList = Array.isArray(alias) ? alias : [alias];
+
+      return aliasList.map((aliasOption) => {
+        parts[0] = aliasOption;
+
+        return path.join(this.root, parts.join(path.sep));
+      });
+    }
+
+    return [filePath];
   };
 
   /**
@@ -246,23 +290,6 @@ export default class Analyzer {
     }
 
     return this.res(filePath, parent);
-  };
-
-  private replaceAlias = (filePath: FilePath) => {
-    const parts = filePath.split(path.sep);
-    const firstSegment = parts[0];
-
-    if (firstSegment === '.' || firstSegment === '..') {
-      return filePath;
-    }
-
-    if (firstSegment in this.options.alias) {
-      parts[0] = this.options.alias[firstSegment];
-
-      return path.join(this.root, parts.join(path.sep));
-    }
-
-    return filePath;
   };
 
   private res = (filePath: FilePath, parent: FilePath = '') => {
